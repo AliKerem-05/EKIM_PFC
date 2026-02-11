@@ -101,7 +101,7 @@ design_specs = {
     'Vac_min': 207,      # V
     'Vac_max': 253,     # V
     'Vo': 400,          # V
-    'Po': 250,         # W
+    'Po': 500,         # W
     'f_sw': 65e3,      # 65 kHz [cite: 127]
     'f_line': 60,       # Hz
     'ripple': 0.25,     # %25 Ripple [cite: 129]
@@ -119,7 +119,19 @@ calc_C = pfc.calculate_output_capacitor()
 
 # 4. İleri Aşama: Kapasitör Kütüphanesinden Seçim Yap
 # Örnek Kütüphane (uF cinsinden standart değerler)
-capacitor_library = [100, 150, 220, 330, 470, 560, 680]
-
+# 1uF ile 3000uF arasındaki standart kapasitör değerleri (E12 Serisi)
+capacitor_library = [
+    # 1 - 10 uF Arası (Genelde Film Kapasitörler veya Küçük Elektrolitik)
+    1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2,
+    
+    # 10 - 100 uF Arası
+    10, 12, 15, 18, 22, 27, 33, 39, 47, 56, 68, 82,
+    
+    # 100 - 1000 uF Arası (PFC Çıkışı için en yaygın aralık)
+    100, 120, 150, 180, 220, 270, 330, 390, 470, 560, 680, 820,
+    
+    # 1000 - 3000 uF Arası (Yüksek Güçlü Uygulamalar)
+    1000, 1200, 1500, 1800, 2200, 2700
+]
 # Hedef değere ulaşmak için kütüphaneden en iyi kombinasyonu bul
 pfc.find_capacitor_combination(capacitor_library, max_parallel=3)
