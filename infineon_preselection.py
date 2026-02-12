@@ -110,6 +110,8 @@ design_specs = {
     'V_ripple': 10      # 10 Vpp [cite: 133]
 }
 
+"""
+
 # 2. Tasarım Nesnesini Oluştur
 pfc = PFCBoostDesign(design_specs)
 
@@ -134,4 +136,7 @@ capacitor_library = [
     1000, 1200, 1500, 1800, 2200, 2700
 ]
 # Hedef değere ulaşmak için kütüphaneden en iyi kombinasyonu bul
+
 pfc.find_capacitor_combination(capacitor_library, max_parallel=3)
+
+"""
