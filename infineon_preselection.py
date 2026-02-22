@@ -67,6 +67,7 @@ class PFCBoostDesign:
         
         return self.Co_calc_uF
 
+        
     def find_capacitor_combination(self, library, max_parallel=3):
         """
         İLERİ AŞAMA: Kütüphane Bazlı Seçim
@@ -94,6 +95,38 @@ class PFCBoostDesign:
         print(f"Elde Edilen Toplam: {sum(best_combo):.2f} uF")
         print(f"Hata Payı: {best_diff:.2f} uF")
 
+
+"""
+
+    def find_capacitor_combination(capacitor_library, target_cap_uF, tolerance=0.10, max_parallel=3):
+        
+       Sözlük yapısındaki kapasitör listesini kullanarak hedef kapasiteye en yakın 
+       kombinasyonları parça numaralarıyla birlikte bulur.
+        
+        suitable_combinations = []
+    
+      # max_parallel miktarına kadar tüm olasılıkları dene (1'li, 2'li, 3'lü kombinasyonlar)
+        for r in range(1, max_parallel + 1):
+            # combinations_with_replacement aynı parçanın birden fazla kullanımına izin verir (paralel bağlama)
+            for combo in itertools.combinations_with_replacement(capacitor_library, r):
+                total_cap = sum(c['cap_uF'] for c in combo)
+            
+                # Hedef kapasiteye tolerans dahilinde mi?
+                if target_cap_uF * (1 - tolerance) <= total_cap <= target_cap_uF * (1 + tolerance):
+                    # Bu kombinasyonu kaydet
+                    combination_info = {
+                        "parts": [c['part'] for c in combo],
+                        "total_cap": total_cap,
+                        "diff_uF": round(total_cap - target_cap_uF, 2),
+                        "voltages": [c['volt'] for c in combo]
+                    }
+                    suitable_combinations.append(combination_info)
+
+        # Sonuçları hedefe en yakın olandan başlayarak sırala
+        suitable_combinations.sort(key=lambda x: abs(x['diff_uF']))
+        return suitable_combinations
+
+
 # --- KULLANIM ---
 
 # 1. Başlangıç Değerleri (Dokümandaki Tablo 1 örneği baz alınmıştır )
@@ -110,7 +143,13 @@ design_specs = {
     'V_ripple': 10      # 10 Vpp [cite: 133]
 }
 
-"""
+
+
+
+
+
+
+
 
 # 2. Tasarım Nesnesini Oluştur
 pfc = PFCBoostDesign(design_specs)
