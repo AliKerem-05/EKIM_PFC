@@ -1,5 +1,7 @@
 import math
 
+
+    
 # Katalogdan çıkarılan örnek 250V, 400V, 450V ve 500V Kapasitör Veritabanı
 # [Kapasite (uF), Voltaj (V), Boyut (mm), Baz Ripple Akımı (A) @ 100Hz/105°C, Parça Numarası]
 capacitors_db = [
@@ -94,31 +96,33 @@ def get_freq_multiplier(freq_hz):
     elif freq_hz <= 1000: return 1.50
     else: return 1.55 # >10kHz için PFC anahtarlama frekansı gibi yüksek frekanslar
 
-def find_suitable_capacitors(target_ripple, temp, freq):
-    """Verilen kriterleri sağlayan kapasitörleri filtreler ve sıralar."""
+class kapasitefiltresi:
+
+    def find_suitable_capacitors(target_ripple, temp, freq):
+        """Verilen kriterleri sağlayan kapasitörleri filtreler ve sıralar."""
     
-    temp_mult = get_temp_multiplier(temp)
-    freq_mult = get_freq_multiplier(freq)
+        temp_mult = get_temp_multiplier(temp)
+        freq_mult = get_freq_multiplier(freq)
     
-    # Toplam çarpan
-    total_mult = temp_mult * freq_mult
+        # Toplam çarpan
+        total_mult = temp_mult * freq_mult
     
-    suitable_caps = []
+        suitable_caps = []
     
-    for cap in capacitors_db:
-        # Kapasitörün girilen koşullardaki GÜNCELLENMİŞ Ripple kapasitesi
-        actual_max_ripple = cap["base_ripple"] * total_mult
+        for cap in capacitors_db:
+            # Kapasitörün girilen koşullardaki GÜNCELLENMİŞ Ripple kapasitesi
+            actual_max_ripple = cap["base_ripple"] * total_mult
         
-        # Eğer güncellenmiş kapasite bizim hedef ripple'ımızdan büyük veya eşitse listeye al
-        if actual_max_ripple >= target_ripple:
-            cap_copy = cap.copy()
-            cap_copy["actual_max_ripple"] = round(actual_max_ripple, 2)
-            suitable_caps.append(cap_copy)
+            # Eğer güncellenmiş kapasite bizim hedef ripple'ımızdan büyük veya eşitse listeye al
+            if actual_max_ripple >= target_ripple:
+                cap_copy = cap.copy()
+                cap_copy["actual_max_ripple"] = round(actual_max_ripple, 2)
+                suitable_caps.append(cap_copy)
             
-    # Güncellenmiş dalgalanma akımı kapasitesine göre küçükten büyüğe (artan sırada) sırala
-    suitable_caps.sort(key=lambda x: x["actual_max_ripple"])
+        # Güncellenmiş dalgalanma akımı kapasitesine göre küçükten büyüğe (artan sırada) sırala
+        suitable_caps.sort(key=lambda x: x["actual_max_ripple"])
     
-    return suitable_caps, temp_mult, freq_mult
+        return suitable_caps, temp_mult, freq_mult
 
 # --- KULLANICI GİRDİSİ BÖLÜMÜ ---
 # Kendi PFC tasarımınıza göre buradaki değerleri değiştirebilirsiniz
@@ -130,8 +134,9 @@ CALISMA_FREKANSI = 6000   # Hertz (PFC Boost tasarımı için 65 kHz örneği)
 parca_no_sirali_liste = []
 kapasite_sirali_liste = []
 
+
 try:
-    results, t_mult, f_mult = find_suitable_capacitors(HEDEF_RIPPLE_AKIMI, CALISMA_SICAKLIGI, CALISMA_FREKANSI)
+    results, t_mult, f_mult = kapasitefiltresi.find_suitable_capacitors(HEDEF_RIPPLE_AKIMI, CALISMA_SICAKLIGI, CALISMA_FREKANSI)
     
     print(f"--- ARAMA KRİTERLERİ ---")
     print(f"Hedef Ripple Akımı : {HEDEF_RIPPLE_AKIMI} A | Toplam Çarpan: {round(t_mult * f_mult, 2)}")
