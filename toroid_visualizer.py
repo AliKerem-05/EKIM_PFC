@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 import math
@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, Rectangle
+from matplotlib.patches import Circle, FancyBboxPatch, Rectangle
 
 from toroid_core_library import ToroidCoreLibrary, ToroidProperties
 from wire_lib_solid_awg import SolarisWireLibrary, WireProperties
@@ -81,7 +81,6 @@ def _add_top_view(
 
     wire_r = max(0.14, wire.diameter_mm / 2.0)
     winding_r_outer = outer_r + wire_r * 0.95
-    # Inner crossing points are visible at hole edge.
     winding_r_inner = max(wire_r * 1.4, inner_r - wire_r * 0.95)
 
     max_turns = _compute_turn_capacity(core, wire.diameter_mm)
@@ -165,50 +164,58 @@ def _add_side_view(
     wire: WireProperties,
     turns: int,
     style: ViewStyle,
+    side_clearance_mm: float,
 ) -> None:
     _ = turns
     outer_w = core.od_mm
     inner_w = core.id_mm
     height = core.height_mm
-    ring_thickness_x = (outer_w - inner_w) / 2.0
+    leg_w = (outer_w - inner_w) / 2.0
+    left_leg_x = -outer_w / 2.0
+    right_leg_x = inner_w / 2.0
 
     ax.add_patch(
         Rectangle(
-            (-outer_w / 2.0, -height / 2.0),
-            ring_thickness_x,
+            (left_leg_x, -height / 2.0),
+            leg_w,
             height,
             facecolor=style.core_face_color,
             edgecolor=style.core_edge_color,
             linewidth=2.2,
-            zorder=1,
+            zorder=2,
         )
     )
     ax.add_patch(
         Rectangle(
-            (inner_w / 2.0, -height / 2.0),
-            ring_thickness_x,
+            (right_leg_x, -height / 2.0),
+            leg_w,
             height,
             facecolor=style.core_face_color,
             edgecolor=style.core_edge_color,
             linewidth=2.2,
-            zorder=1,
+            zorder=2,
         )
     )
 
-    # One section-loop (single winding) instead of stacked circles.
-    wire_r = max(0.12, wire.diameter_mm / 2.0)
-    x_left = -outer_w / 2.0 - wire_r * 1.6
-    x_right = outer_w / 2.0 + wire_r * 1.6
-    y_top = height / 2.0 + wire_r * 1.25
-    y_bottom = -height / 2.0 - wire_r * 1.25
+    offset = max(0.12, side_clearance_mm)
+    rounding = max(0.7, min(leg_w, height) * 0.16)
 
-    ax.plot([x_left, x_left], [y_bottom, y_top], color=style.wire_color_main, linewidth=2.4, zorder=3)
-    ax.plot([x_right, x_right], [y_bottom, y_top], color=style.wire_color_main, linewidth=2.4, zorder=3)
-    ax.plot([x_left, x_right], [y_top, y_top], color=style.wire_color_main, linewidth=2.4, zorder=3)
-    ax.plot([x_left, x_right], [y_bottom, y_bottom], color=style.wire_color_main, linewidth=2.4, zorder=3)
+    for leg_x in (left_leg_x, right_leg_x):
+        ax.add_patch(
+            FancyBboxPatch(
+                (leg_x - offset, -height / 2.0 - offset),
+                leg_w + 2.0 * offset,
+                height + 2.0 * offset,
+                boxstyle=f"round,pad=0,rounding_size={rounding}",
+                facecolor="none",
+                edgecolor=style.wire_color_main,
+                linewidth=2.0,
+                zorder=1,
+            )
+        )
 
     margin_x = max(10.0, outer_w * 0.24)
-    margin_y = max(4.2, height * 0.45)
+    margin_y = max(4.8, height * 0.75)
     ax.set_xlim(-(outer_w / 2.0 + margin_x), outer_w / 2.0 + margin_x)
     ax.set_ylim(-(height / 2.0 + margin_y), height / 2.0 + margin_y)
     ax.set_aspect("equal", adjustable="box")
@@ -241,6 +248,7 @@ def plot_toroid(
     out_path: str | None = None,
     dpi: int = 150,
     show: bool = False,
+    side_clearance_mm: float = 0.6,
 ) -> Path:
     wire_lib = SolarisWireLibrary()
     wire = wire_lib.get_wire(awg)
@@ -253,7 +261,7 @@ def plot_toroid(
         ax.set_facecolor(style.bg_color)
 
     drawn_turns, max_turns = _add_top_view(axes[0], core, wire, turns, style)
-    _add_side_view(axes[1], core, wire, drawn_turns, style)
+    _add_side_view(axes[1], core, wire, drawn_turns, style, side_clearance_mm)
 
     title = (
         f"Toroid {core.part_number} | OD={core.od_mm:.2f} mm ID={core.id_mm:.2f} mm H={core.height_mm:.2f} mm | "
@@ -298,6 +306,12 @@ def main() -> None:
     )
     parser.add_argument("--dpi", type=int, default=150, help="Output DPI for saved image.")
     parser.add_argument("--show", action="store_true", help="Show figure after saving.")
+    parser.add_argument(
+        "--side-clearance",
+        type=float,
+        default=0.6,
+        help="Side view winding clearance around each toroid leg in mm.",
+    )
     args = parser.parse_args()
 
     lib = ToroidCoreLibrary()
@@ -305,7 +319,15 @@ def main() -> None:
     if core is None:
         raise ValueError(f"Part number not found: {args.part}")
 
-    plot_toroid(core, turns=args.turns, awg=args.awg, out_path=args.output, dpi=args.dpi, show=args.show)
+    plot_toroid(
+        core,
+        turns=args.turns,
+        awg=args.awg,
+        out_path=args.output,
+        dpi=args.dpi,
+        show=args.show,
+        side_clearance_mm=args.side_clearance,
+    )
 
 
 if __name__ == "__main__":
