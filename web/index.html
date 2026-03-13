@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PFC Inductor Design Studio</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hero card">
+      <div>
+        <p class="eyebrow">Python backend + HTML studio</p>
+        <h1>PFC Inductor Design Studio</h1>
+        <p class="lead">Tum cekirdekler brute-force taranir. Sadece gecerli kombinasyonlar listelenir. Sonuclar hacim ve toplam kayip icin min-max normalize edilmis skor ile siralanir.</p>
+      </div>
+      <div class="hero-note">
+        <div>Target runtime</div>
+        <strong>C:\Users\emrer\AppData\Local\Programs\Python\Python312\python.exe</strong>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <form id="search-form" class="card controls">
+        <div class="section-title">Mode</div>
+        <label>
+          Design mode
+          <select name="design_mode" id="design_mode">
+            <option value="pfc">PFC based target</option>
+            <option value="direct">Manual inductance target</option>
+          </select>
+        </label>
+
+        <div class="columns four">
+          <label>
+            fsw (kHz)
+            <input type="number" name="f_sw_khz" value="65" step="0.1">
+          </label>
+          <label>
+            Ambient (C)
+            <input type="number" name="ambient_c" value="40" step="0.1">
+          </label>
+          <label>
+            Rise limit (C)
+            <input type="number" name="rise_limit_c" value="60" step="0.1">
+          </label>
+          <label>
+            B limit (T)
+            <input type="number" name="b_limit_t" value="1.0" step="0.01">
+          </label>
+        </div>
+
+        <div class="columns four">
+          <label>
+            Fixed parallel count
+            <input type="number" name="fixed_parallel_count" value="0" step="1" min="0">
+          </label>
+          <label>
+            Max layers
+            <select name="max_layers">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+            </select>
+          </label>
+          <label>
+            L tolerance (%)
+            <input type="number" name="l_tolerance_pct" value="10" step="0.5">
+          </label>
+          <label>
+            Max scanned cores
+            <input type="number" name="max_search_cores" value="999" step="1" min="1">
+          </label>
+        </div>
+
+        <div class="columns four">
+          <label>
+            Best weight volume
+            <input type="number" name="best_w_vol" value="0.6" step="0.05">
+          </label>
+          <label>
+            Best weight loss
+            <input type="number" name="best_w_loss" value="0.4" step="0.05">
+          </label>
+          <label>
+            Result limit
+            <input type="number" name="result_limit" value="200" step="1" min="20" max="2000">
+          </label>
+          <label>
+            Fixed turns (optional)
+            <input type="number" name="fixed_turns" value="" step="1" min="1">
+          </label>
+        </div>
+
+        <div class="section-title">Thermal</div>
+        <div class="columns four">
+          <label>
+            Ventilation
+            <select name="ventilation">
+              <option value="natural">Natural</option>
+              <option value="fan-small">Fan small</option>
+              <option value="fan-strong">Fan strong</option>
+              <option value="heatsink">Heatsink</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <label>
+            Air speed (m/s)
+            <input type="number" name="air_speed_m_s" value="" step="0.1">
+          </label>
+          <label>
+            Thermal k
+            <input type="number" name="thermal_k" value="" step="0.001">
+          </label>
+          <label>
+            Rth scale
+            <input type="number" name="rth_scale" value="1.0" step="0.05">
+          </label>
+        </div>
+
+        <div class="section-title">PFC Inputs</div>
+        <div class="mode-panel" data-mode="pfc">
+          <div class="columns three">
+            <label>
+              Vin,min RMS (Vac)
+              <input type="number" name="vin_rms_min_v" value="85" step="0.1">
+            </label>
+            <label>
+              Vout (Vdc)
+              <input type="number" name="vout_v" value="390" step="0.1">
+            </label>
+            <label>
+              Pout (W)
+              <input type="number" name="pout_w" value="1200" step="0.1">
+            </label>
+          </div>
+          <div class="columns two">
+            <label>
+              Efficiency estimate
+              <input type="number" name="eta_est" value="0.95" step="0.01" min="0.1" max="1">
+            </label>
+            <label>
+              Ripple target (% of low-line peak current)
+              <input type="number" name="ripple_pct" value="25" step="0.1">
+            </label>
+          </div>
+        </div>
+
+        <div class="section-title">Manual L / Current</div>
+        <div class="mode-panel hidden" data-mode="direct">
+          <div class="columns two">
+            <label>
+              Target inductance (uH)
+              <input type="number" name="target_inductance_uH" value="598" step="0.1">
+            </label>
+            <label>
+              Delta I pp (A)
+              <input type="number" name="delta_i_pp_a" value="1.66" step="0.01">
+            </label>
+          </div>
+          <div class="columns two">
+            <label>
+              Iavg (A)
+              <input type="number" name="i_avg_a" value="7.65" step="0.01">
+            </label>
+            <div class="derived-panel" id="derived-current-panel">
+              <div class="derived-title">Derived current values</div>
+              <div>Imin: <strong id="derived-imin">-</strong> A</div>
+              <div>Ipk: <strong id="derived-ipk">-</strong> A</div>
+              <div>Irms: <strong id="derived-irms">-</strong> A</div>
+            </div>
+          </div>
+          <div class="inline-note">
+            <div>Manual mode uses L, Iavg and DeltaI. Ipk alone is not enough for copper loss, ripple and DC-bias-loaded inductance checks.</div>
+            <div>Ku is calculated from inner winding usage: total copper area / inner window area.</div>
+          </div>
+        </div>
+
+        <div class="section-title">Exclude Core IDs</div>
+        <div id="core-exclude-list" class="checklist"></div>
+
+        <div class="section-title">Exclude Permeabilities</div>
+        <div id="perm-exclude-list" class="checklist compact"></div>
+
+        <div class="section-title">Exclude Wire AWG</div>
+        <div id="wire-exclude-list" class="checklist"></div>
+
+        <div class="actions">
+          <button type="submit" class="primary">Brute-force all cores</button>
+        </div>
+
+        <div class="progress-panel">
+          <div class="progress-label"><span id="progress-text">Idle.</span><span id="progress-percent">0%</span></div>
+          <div class="progress-bar"><div id="progress-fill"></div></div>
+        </div>
+      </form>
+
+      <section class="stack">
+        <section class="card results">
+          <div class="section-title">Best Result</div>
+          <div id="summary" class="summary empty">Catalog loading...</div>
+          <div id="thermal-summary" class="inline-note hidden"></div>
+          <div class="section-title">Warnings</div>
+          <ul id="warnings" class="warnings"></ul>
+        </section>
+
+        <section class="card visual-card">
+          <div class="section-title">Visualization</div>
+          <div class="columns three">
+            <label>
+              Core
+              <select id="viz-core"></select>
+            </label>
+            <label>
+              Wire
+              <select id="viz-wire"></select>
+            </label>
+            <label>
+              Turns
+              <input type="number" id="viz-turns" value="20" min="1" step="1">
+            </label>
+          </div>
+          <div class="visual-actions">
+            <button type="button" id="make-visuals" class="secondary">Generate selected 2D/3D</button>
+            <button type="button" id="use-best-visual" class="secondary">Use best result</button>
+            <a id="open-3d" class="link-button disabled" href="#" target="_blank" rel="noopener">Open 3D HTML</a>
+          </div>
+          <div id="visual-status" class="visual-status">No visuals yet.</div>
+          <img id="visual-2d" class="visual-image hidden" alt="2D winding visualization">
+        </section>
+
+        <section class="card results">
+          <div class="section-title">Valid Results</div>
+          <div class="pagination-bar">
+            <button type="button" id="prev-page" class="secondary">Prev</button>
+            <span id="page-info">Page 1 / 1</span>
+            <button type="button" id="next-page" class="secondary">Next</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Core</th>
+                  <th>Wire</th>
+                  <th>Parallel</th>
+                  <th>N</th>
+                  <th>Layers</th>
+                  <th>L (uH)</th>
+                  <th>Loss (W)</th>
+                  <th>Tcore (C)</th>
+                  <th>Ku</th>
+                  <th>J</th>
+                  <th>Bpk (T)</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody id="candidates-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

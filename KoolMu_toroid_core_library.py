@@ -24,9 +24,47 @@ class KoolMuToroidProperties:
 
 
 class KoolMuToroidCoreLibrary:
+    _DC_BIAS_COEFFS = {
+        "14u": {"a": 0.01, "b": 4.498e-08, "c": 2.034},
+        "26u": {"a": 0.01, "b": 5.266e-07, "c": 1.819},
+        "40u": {"a": 0.01, "b": 2.177e-06, "c": 1.704},
+        "60u": {"a": 0.01, "b": 2.142e-06, "c": 1.855},
+        "75u": {"a": 0.01, "b": 3.885e-06, "c": 1.819},
+        "90u": {"a": 0.01, "b": 5.830e-06, "c": 1.819},
+        "125u": {"a": 0.01, "b": 2.209e-05, "c": 1.636},
+    }
+
+    _TEMP_COEFFS = {
+        "14u": {"a": -1.892e-03, "b": 9.866e-05, "c": -1.966e-06, "d": 5.728e-09, "e": -8.706e-14},
+        "26u": {"a": -2.857e-03, "b": 1.641e-04, "c": -3.233e-06, "d": 1.147e-08, "e": -8.391e-12},
+        "40u": {"a": -3.982e-03, "b": 2.404e-04, "c": -4.711e-06, "d": 1.816e-08, "e": -1.808e-11},
+        "60u": {"a": -5.590e-03, "b": 3.495e-04, "c": -6.822e-06, "d": 2.772e-08, "e": -3.192e-11},
+        "75u": {"a": -6.796e-03, "b": 4.313e-04, "c": -8.406e-06, "d": 3.490e-08, "e": -4.230e-11},
+        "90u": {"a": -8.002e-03, "b": 5.130e-04, "c": -9.989e-06, "d": 4.207e-08, "e": -5.268e-11},
+        "125u": {"a": -1.082e-02, "b": 7.039e-04, "c": -1.368e-05, "d": 5.880e-08, "e": -7.690e-11},
+    }
+
+    _CORE_LOSS_COEFFS = {
+        "14u": {"a": 64.43, "b": 1.988, "c": 1.541},
+        "26u": {"a": 52.36, "b": 1.988, "c": 1.541},
+        "40u": {"a": 52.36, "b": 1.988, "c": 1.541},
+        "60u": {"a": 44.30, "b": 1.988, "c": 1.541},
+        "75u": {"a": 44.30, "b": 1.988, "c": 1.541},
+        "90u": {"a": 44.30, "b": 1.988, "c": 1.541},
+        "125u": {"a": 44.30, "b": 1.988, "c": 1.541},
+    }
+
+    _DC_MAG_COEFFS = {
+        "14u": {"a": 3.918e-02, "b": 1.856e-02, "c": 4.812e-04, "d": 1.390e-01, "e": 4.478e-04, "x": 1.875},
+        "26u": {"a": 3.763e-02, "b": 1.712e-02, "c": 5.155e-04, "d": 9.190e-02, "e": 4.909e-04, "x": 1.812},
+        "40u": {"a": 3.789e-02, "b": 1.632e-02, "c": 5.355e-04, "d": 7.365e-02, "e": 5.110e-04, "x": 1.665},
+        "60u": {"a": 3.601e-02, "b": 1.721e-02, "c": 5.401e-04, "d": 5.624e-02, "e": 5.156e-04, "x": 1.577},
+        "75u": {"a": 3.111e-02, "b": 2.286e-02, "c": 5.343e-04, "d": 5.568e-02, "e": 4.982e-04, "x": 1.614},
+        "90u": {"a": 2.965e-02, "b": 2.538e-02, "c": 5.142e-04, "d": 5.305e-02, "e": 4.867e-04, "x": 1.578},
+        "125u": {"a": 2.730e-02, "b": 2.946e-02, "c": 5.038e-04, "d": 5.274e-02, "e": 4.639e-04, "x": 1.471},
+    }
+
     def __init__(self) -> None:
-        # Veri kullanici tarafindan paylasilan MAG-INC Kool Mu Toroid tablosundan derlenmistir.
-        # AL birimi: nH / T^2
         self._data: Dict[str, KoolMuToroidProperties] = self._load_data()
 
     def get_core(self, part_number: Union[str, int]) -> Optional[KoolMuToroidProperties]:
@@ -35,12 +73,17 @@ class KoolMuToroidCoreLibrary:
     def list_part_numbers(self) -> List[str]:
         return list(self._data.keys())
 
+    def list_supported_permeabilities(self) -> List[str]:
+        return sorted(self._DC_BIAS_COEFFS.keys(), key=lambda item: int(item.replace("u", "")))
+
     def get_al_value(self, part_number: Union[str, int], permeability: Union[str, int]) -> Optional[float]:
         core = self.get_core(part_number)
         if not core:
             raise ValueError(f"Gecersiz Part Number: {part_number}")
 
-        key = str(permeability).strip().replace("u", "u").replace("u", "u").lower()
+        key = str(permeability).strip().lower()
+        if not key.endswith("u"):
+            key = f"{key}u"
         mapping = {
             "14": core.al_14u_nh_t2,
             "14u": core.al_14u_nh_t2,
@@ -61,6 +104,17 @@ class KoolMuToroidCoreLibrary:
         }
         return mapping.get(key)
 
+    def get_material_coefficients(self, permeability: Union[str, int]) -> Dict[str, Optional[dict]]:
+        key = str(permeability).strip().lower()
+        if not key.endswith("u"):
+            key = f"{key}u"
+        return {
+            "dc_bias": self._DC_BIAS_COEFFS.get(key),
+            "temperature": self._TEMP_COEFFS.get(key),
+            "core_loss": self._CORE_LOSS_COEFFS.get(key),
+            "dc_magnetization": self._DC_MAG_COEFFS.get(key),
+        }
+
     def calculate_inductance(self, part_number: Union[str, int], permeability: Union[str, int], turns: float) -> Optional[float]:
         al_value = self.get_al_value(part_number, permeability)
         if al_value is None:
@@ -73,12 +127,7 @@ class KoolMuToroidCoreLibrary:
             return None
         return inductance_h * 1e6
 
-    def estimate_turns_for_inductance_uH(
-        self,
-        part_number: Union[str, int],
-        permeability: Union[str, int],
-        target_inductance_uH: float,
-    ) -> Optional[float]:
+    def estimate_turns_for_inductance_uH(self, part_number: Union[str, int], permeability: Union[str, int], target_inductance_uH: float) -> Optional[float]:
         al_value = self.get_al_value(part_number, permeability)
         if al_value is None or al_value <= 0:
             return None
@@ -96,7 +145,6 @@ class KoolMuToroidCoreLibrary:
 
     def _load_data(self) -> Dict[str, KoolMuToroidProperties]:
         raw_data = [
-            # Part, 14u, 19u, 26u, 40u, 60u, 75u, 90u, 125u, Le, Ae, Ve, OD, ID, HT
             ("140", None, None, None, None, None, 13, 16, 19, 8.06, 1.30, 10.5, 4.19, 1.27, 2.16),
             ("150", None, None, None, None, None, 17, 21, 25, 9.42, 2.11, 19.9, 4.58, 1.72, 3.18),
             ("180", None, None, None, None, None, 20, 25, 30, 10.6, 2.85, 30.3, 5.29, 1.85, 3.18),
@@ -172,4 +220,4 @@ if __name__ == "__main__":
         print("--- Kool Mu 206 Ozellikleri ---")
         print(core_206)
         print(f"206 / 60u / 20 tur -> {lib.calculate_inductance_uH('206', '60u', 20):.3f} uH")
-
+        print(f"60u coeffs -> {lib.get_material_coefficients('60u')}")
