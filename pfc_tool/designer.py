@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 
 from .catalog import build_catalog
 from .materials import (
+    get_koolmu_material_coeffs,
     dc_flux_density_koolmu,
     losses_copper_ac_dowell,
     permeability_dc_bias_ratio,
@@ -47,19 +48,29 @@ def _derive_operating_point(payload: Dict) -> Dict[str, float]:
 
     if mode == "direct":
         target_inductance_uH = _to_float(payload, "target_inductance_uH")
+        delta_i_pp_a = _to_float(payload, "delta_i_pp_a")
+        i_pk_override = _to_float(payload, "i_pk_a", float("nan"))
+        if math.isfinite(i_pk_override) and i_pk_override > 0:
+            i_pk_a = i_pk_override
+            i_avg_a = i_pk_a - delta_i_pp_a / 2.0
+        else:
+            i_avg_a = _to_float(payload, "i_avg_a")
+            i_pk_a = i_avg_a + delta_i_pp_a / 2.0
+        i_min_a = i_pk_a - delta_i_pp_a
         return {
             "mode": "direct",
             "target_inductance_uH": target_inductance_uH,
-            "i_avg_a": _to_float(payload, "i_avg_a"),
-            "delta_i_pp_a": _to_float(payload, "delta_i_pp_a"),
-            "i_pk_a": _to_float(payload, "i_avg_a") + _to_float(payload, "delta_i_pp_a") / 2.0,
-            "i_min_a": _to_float(payload, "i_avg_a") - _to_float(payload, "delta_i_pp_a") / 2.0,
-            "i_rms_a": math.sqrt(_to_float(payload, "i_avg_a") ** 2 + (_to_float(payload, "delta_i_pp_a") ** 2) / 12.0),
+            "i_avg_a": i_avg_a,
+            "delta_i_pp_a": delta_i_pp_a,
+            "i_pk_a": i_pk_a,
+            "i_min_a": i_min_a,
+            "i_rms_a": math.sqrt(i_avg_a ** 2 + (delta_i_pp_a ** 2) / 12.0),
             "f_sw_hz": f_sw_hz,
             "notes": [
                 "Manual target inductance was used directly.",
                 f"Target inductance = {target_inductance_uH:.1f} uH.",
-                "Current inputs are entered as Iavg and ripple peak-to-peak current; Ipk and Irms are derived.",
+                "Manual mode can now be driven directly by maximum current (Ipk) and ripple peak-to-peak current.",
+                "Loaded inductance is checked under DC bias at Ipk.",
             ],
         }
 
@@ -130,7 +141,8 @@ def _winding_geometry(core: Dict[str, float], bundle: Dict[str, float], turns: i
     occupancy = turns / max(total_capacity, 1)
     inner_window_area_mm2 = max(core["id_mm"] * core["height_mm"], 1e-9)
     ku_inner = (turns * bundle["effective_area_mm2"]) / inner_window_area_mm2
-    mean_turn_length_mm = math.pi * ((core["od_mm"] + core["id_mm"]) / 2.0 + (layers - 1) * d_eff_mm)
+    radial_span_mm = (core["od_mm"] - core["id_mm"]) / 2.0
+    mean_turn_length_mm = 2.0 * (radial_span_mm + core["height_mm"] + (layers - 1) * d_eff_mm)
     length_m = mean_turn_length_mm * turns / 1000.0
     return {
         "turns_per_layer": turns_per_layer,
@@ -140,6 +152,9 @@ def _winding_geometry(core: Dict[str, float], bundle: Dict[str, float], turns: i
         "ku_inner": ku_inner,
         "inner_window_area_mm2": inner_window_area_mm2,
         "length_m": length_m,
+        "radial_span_mm": radial_span_mm,
+        "mean_turn_length_mm": mean_turn_length_mm,
+        "radial_build_mm": layers * d_eff_mm,
         "d_bundle_mm_eff": d_eff_mm,
         "fits": layers <= max_layers and turns <= total_capacity and ku_inner <= 1.0,
         "total_capacity": total_capacity,
@@ -221,6 +236,9 @@ def _evaluate_turn(core: Dict[str, float], wire: Dict[str, float], operating: Di
             "ku_inner": geom["ku_inner"],
             "inner_window_area_mm2": geom["inner_window_area_mm2"],
             "length_m": geom["length_m"],
+            "radial_span_mm": geom["radial_span_mm"],
+            "mean_turn_length_mm": geom["mean_turn_length_mm"],
+            "radial_build_mm": geom["radial_build_mm"],
             "layers": geom["layers"],
             "turns_per_layer": geom["turns_per_layer"],
             "total_capacity": geom["total_capacity"],
@@ -377,6 +395,37 @@ def evaluate_pfc_inductor(payload: Dict) -> Dict:
 
 def search_pfc_inductors(payload: Dict) -> Dict:
     return bruteforce_search_pfc_inductors(payload, progress_callback=None)
+
+
+def evaluate_candidate_details(payload: Dict) -> Dict:
+    core_id = str(payload.get("core_id", "")).strip()
+    wire_id = str(payload.get("wire_id", "")).strip()
+    turns = _to_int(payload, "turns", 0)
+    if not core_id or core_id not in _CORE_MAP:
+        raise ValueError("Valid core_id is required")
+    if not wire_id or wire_id not in _WIRE_MAP:
+        raise ValueError("Valid wire_id is required")
+    if turns <= 0:
+        raise ValueError("turns must be greater than zero")
+
+    core = _CORE_MAP[core_id]
+    wire = _WIRE_MAP[wire_id]
+    operating = _derive_operating_point(payload)
+    max_layers = max(1, min(2, _to_int(payload, "max_layers", 2)))
+    bundle = _build_parallel_wire(wire, operating["i_rms_a"], payload)
+    geometry = _winding_geometry(core, bundle, turns, max_layers)
+    result = _evaluate_turn(core, wire, operating, payload, turns)
+
+    return {
+        "operating_point": operating,
+        "core": core,
+        "wire": wire,
+        "turns": turns,
+        "bundle": bundle,
+        "geometry": geometry,
+        "result": result,
+        "material_coefficients": get_koolmu_material_coeffs(core["permeability"]),
+    }
 
 
 def get_catalog() -> Dict:

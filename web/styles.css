@@ -26,7 +26,10 @@ h1 { margin: 0; font-size: clamp(2.4rem, 4vw, 4.9rem); line-height: .94; }
 .lead { max-width: 840px; color: var(--muted); margin-bottom: 0; }
 .hero-note { min-width: 260px; align-self: start; background: rgba(49,95,114,.08); border: 1px solid rgba(49,95,114,.12); border-radius: 18px; padding: 14px 16px; font-size: .92rem; }
 .hero-note strong { display: block; margin-top: 6px; word-break: break-all; }
+.inline-link { color: var(--accent-2); text-decoration: none; }
 .workspace { display: grid; grid-template-columns: minmax(420px, 620px) 1fr; gap: 18px; }
+.test-workspace { grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); align-items: start; }
+.test-compact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .stack { display: grid; gap: 18px; }
 .controls, .results, .visual-card { padding: 20px; }
 .controls { display: grid; gap: 12px; }
@@ -35,9 +38,9 @@ h1 { margin: 0; font-size: clamp(2.4rem, 4vw, 4.9rem); line-height: .94; }
 .columns.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .columns.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .columns.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-label { display: grid; gap: 6px; font-size: .93rem; }
+label { display: grid; gap: 6px; font-size: .93rem; align-content: start; }
 input, select, button { font: inherit; }
-input, select { width: 100%; padding: 11px 12px; border-radius: 13px; border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--ink); }
+input, select { width: 100%; min-height: 46px; padding: 11px 12px; border-radius: 13px; border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--ink); }
 .actions, .visual-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
 .primary, .secondary, .link-button { border-radius: 999px; padding: 12px 18px; text-decoration: none; cursor: pointer; }
 .primary { border: 0; background: linear-gradient(135deg, var(--accent) 0%, #6c2418 100%); color: #fff7ef; }
@@ -61,7 +64,7 @@ th { color: var(--muted); font-weight: normal; }
 .tick-item { display: flex; align-items: center; gap: 8px; font-size: .88rem; }
 .tick-item input { width: auto; margin: 0; }
 @media (max-width: 1180px) { .workspace { grid-template-columns: 1fr; } }
-@media (max-width: 860px) { .columns.two, .columns.three, .columns.four, .hero, .checklist, .checklist.compact { grid-template-columns: 1fr; display: grid; } }
+@media (max-width: 860px) { .columns.two, .columns.three, .columns.four, .test-compact-grid, .hero, .checklist, .checklist.compact { grid-template-columns: 1fr; display: grid; } }
 
 .progress-panel { margin-top: 8px; }
 .progress-label { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .88rem; margin-bottom: 6px; }
@@ -72,3 +75,16 @@ th { color: var(--muted); font-weight: normal; }
 .pagination-bar #page-info { color: var(--muted); }
 .derived-panel { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(49,95,114,.12); background: rgba(49,95,114,.07); align-content: start; }
 .derived-title { color: var(--accent-2); text-transform: uppercase; letter-spacing: .12em; font-size: .72rem; }
+.formula-list, .formula-sections { display: grid; gap: 12px; }
+.formula-card { border: 1px solid rgba(32,36,43,.08); border-radius: 18px; padding: 16px; background: var(--panel-strong); }
+.formula-head h3, .formula-card h3 { margin: 0 0 6px; font-size: 1.1rem; }
+.formula-head p, .formula-card p { margin: 0; color: var(--muted); }
+.formula-name { color: var(--accent); text-transform: uppercase; letter-spacing: .14em; font-size: .74rem; margin-bottom: 6px; }
+.equation { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: rgba(49,95,114,.08); color: var(--accent-2); font-size: .95rem; line-height: 1.5; }
+.math-lines { display: grid; gap: 6px; font-family: "Cambria Math", "Times New Roman", serif; font-size: 1.02rem; }
+.math-lines sub, .math-lines sup { line-height: 0; }
+.formula-detail { margin-top: 12px; color: var(--muted); font-size: .92rem; }
+.kv-grid { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.kv { border-radius: 14px; border: 1px solid rgba(32,36,43,.08); padding: 10px 12px; background: rgba(255,255,255,.72); }
+.kv span { display: block; color: var(--muted); font-size: .76rem; margin-bottom: 6px; }
+.kv strong { display: block; font-size: 1.08rem; }

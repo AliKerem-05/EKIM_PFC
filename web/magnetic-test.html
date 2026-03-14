@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manyetik Test Laboratuvari</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hero card">
+      <div>
+        <p class="eyebrow">Acik hesap sayfasi</p>
+        <h1>Manyetik Test Laboratuvari</h1>
+        <p class="lead">Bu sayfa secilen cekirdek, tel ve sarim icin tum manyetik hesaplari tek tek acar. Her blokta denklem, katsayi, ara deger ve son hesap net olarak gosterilir.</p>
+      </div>
+      <div class="hero-note">
+        <div>Hizli gecis</div>
+        <strong><a href="/" class="inline-link">Tasarim arayuzune don</a></strong>
+      </div>
+    </section>
+
+    <section class="workspace test-workspace">
+      <form id="test-form" class="card controls">
+        <div class="section-title">Aday Secimi</div>
+        <div class="columns three">
+          <label>
+            Core
+            <select name="core_id" id="test-core"></select>
+          </label>
+          <label>
+            Wire
+            <select name="wire_id" id="test-wire"></select>
+          </label>
+          <label>
+            Turns
+            <input type="number" name="turns" id="test-turns" value="20" min="1" step="1">
+          </label>
+        </div>
+
+        <div class="section-title">Ortak Sinirlar</div>
+        <div class="columns two test-compact-grid">
+          <label>
+            fsw (kHz)
+            <input type="number" name="f_sw_khz" value="65" step="0.1">
+          </label>
+          <label>
+            Ambient (C)
+            <input type="number" name="ambient_c" value="40" step="0.1">
+          </label>
+          <label>
+            Rise limit (C)
+            <input type="number" name="rise_limit_c" value="60" step="0.1">
+          </label>
+          <label>
+            B limit (T)
+            <input type="number" name="b_limit_t" value="1.0" step="0.01">
+          </label>
+        </div>
+
+        <div class="columns two test-compact-grid">
+          <label>
+            Fixed parallel count
+            <input type="number" name="fixed_parallel_count" value="0" step="1" min="0">
+          </label>
+          <label>
+            Max layers
+            <select name="max_layers">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+            </select>
+          </label>
+          <label>
+            Target J (A/mm2)
+            <input type="number" name="target_j_a_per_mm2" value="4.0" step="0.1">
+          </label>
+          <label>
+            L tolerance (%)
+            <input type="number" name="l_tolerance_pct" value="10" step="0.5">
+          </label>
+        </div>
+
+        <div class="section-title">Termal</div>
+        <div class="columns two test-compact-grid">
+          <label>
+            Ventilation
+            <select name="ventilation">
+              <option value="natural">Natural</option>
+              <option value="fan-small">Fan small</option>
+              <option value="fan-strong">Fan strong</option>
+              <option value="heatsink">Heatsink</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <label>
+            Air speed (m/s)
+            <input type="number" name="air_speed_m_s" value="" step="0.1">
+          </label>
+          <label>
+            Thermal k
+            <input type="number" name="thermal_k" value="" step="0.001">
+          </label>
+          <label>
+            Rth scale
+            <input type="number" name="rth_scale" value="1.0" step="0.05">
+          </label>
+        </div>
+
+        <div class="section-title">Mod</div>
+        <label>
+          Design mode
+          <select name="design_mode" id="test-design-mode">
+            <option value="direct" selected>Manual inductance target</option>
+            <option value="pfc">PFC based target</option>
+          </select>
+        </label>
+
+        <div class="mode-panel" data-mode="pfc">
+          <div class="columns three">
+            <label>
+              Vin,min RMS (Vac)
+              <input type="number" name="vin_rms_min_v" value="85" step="0.1">
+            </label>
+            <label>
+              Vout (Vdc)
+              <input type="number" name="vout_v" value="390" step="0.1">
+            </label>
+            <label>
+              Pout (W)
+              <input type="number" name="pout_w" value="1200" step="0.1">
+            </label>
+          </div>
+          <div class="columns two">
+            <label>
+              Efficiency estimate
+              <input type="number" name="eta_est" value="0.95" step="0.01" min="0.1" max="1">
+            </label>
+            <label>
+              Ripple target (% of low-line peak current)
+              <input type="number" name="ripple_pct" value="25" step="0.1">
+            </label>
+          </div>
+        </div>
+
+        <div class="mode-panel" data-mode="direct">
+          <div class="columns two">
+            <label>
+              Target inductance (uH)
+              <input type="number" name="target_inductance_uH" value="598" step="0.1">
+            </label>
+            <label>
+              Delta I pp (A)
+              <input type="number" name="delta_i_pp_a" value="1.66" step="0.01">
+            </label>
+          </div>
+          <div class="columns two">
+            <label>
+              Imax / Ipk (A)
+              <input type="number" name="i_pk_a" value="8.48" step="0.01">
+            </label>
+            <div class="derived-panel">
+              <div class="derived-title">Derived current values</div>
+              <div>Iavg: <strong id="test-derived-iavg">-</strong> A</div>
+              <div>Imin: <strong id="test-derived-imin">-</strong> A</div>
+              <div>Ipk: <strong id="test-derived-ipk">-</strong> A</div>
+              <div>Irms: <strong id="test-derived-irms">-</strong> A</div>
+            </div>
+          </div>
+          <div class="inline-note">
+            <div>Manual test modu maksimum akimi dogrudan kullanir.</div>
+            <div>Yani hedef enduktans, DC bias altinda Ipk noktasinda kontrol edilir.</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="primary">Manyetik testi calistir</button>
+        </div>
+      </form>
+
+      <section class="stack">
+        <section class="card results">
+          <div class="section-title">Ozet</div>
+          <div id="test-summary" class="summary empty">Katalog yukleniyor...</div>
+          <div id="test-status" class="inline-note">Hazir.</div>
+        </section>
+
+        <section class="card results">
+          <div class="section-title">Fonksiyon Haritasi</div>
+          <div id="function-map" class="formula-list"></div>
+        </section>
+
+        <section class="card results">
+          <div class="section-title">Ayrintili Hesaplar</div>
+          <div id="formula-sections" class="formula-sections"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="/magnetic-test.js"></script>
+</body>
+</html>

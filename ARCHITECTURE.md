@@ -8,9 +8,9 @@ Bu yapi, PFC boost induktoru icin hem tek secim analizi hem de filtreli kutuphan
 ### 1. Data layer
 - `KoolMu_toroid_core_library.py`
   - Kool Mu toroid geometri ve AL verileri.
-  - Fotoðraflardan eklenen DC bias, permeability-temperature, core loss ve DC magnetization katsayilari.
+  - Fotograflardan eklenen DC bias, permeability-temperature, core loss ve DC magnetization katsayilari.
 - `wire_lib_solid_awg.py`
-  - AWG tel geometri, alan, direnç ve kaba frekans/current limit verileri.
+  - AWG tel geometri, alan, direnc ve kaba frekans/current limit verileri.
 
 ### 2. Physics layer
 - `pfc_tool/materials.py`
@@ -68,7 +68,7 @@ Bu katman saf hesap katmanidir; UI veya HTTP bilmez.
 4. Her kombinasyon icin turn range degerlendirilir.
 5. Her turn icin:
    - H -> DC bias permeability reduction
-   - Sýcaklýk -> permeability correction
+   - Sï¿½caklï¿½k -> permeability correction
    - AL_eff -> L
    - Bdc + Bac -> toplam peak flux
    - Steinmetz -> core loss

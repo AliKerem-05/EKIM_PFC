@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from pfc_tool import bruteforce_search_pfc_inductors, build_catalog, evaluate_pfc_inductor, search_pfc_inductors
+from pfc_tool import bruteforce_search_pfc_inductors, build_catalog, evaluate_candidate_details, evaluate_pfc_inductor, search_pfc_inductors
 
 
 ROOT = Path(__file__).resolve().parent
@@ -38,7 +38,7 @@ class PfcAppHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        if parsed.path not in {"/api/design", "/api/search", "/api/search/start"}:
+        if parsed.path not in {"/api/design", "/api/search", "/api/search/start", "/api/candidate-detail"}:
             return self.send_error(HTTPStatus.NOT_FOUND, "Unknown endpoint")
 
         try:
@@ -50,6 +50,9 @@ class PfcAppHandler(BaseHTTPRequestHandler):
                 return self._send_json(result)
             if parsed.path == "/api/search":
                 result = search_pfc_inductors(payload)
+                return self._send_json(result)
+            if parsed.path == "/api/candidate-detail":
+                result = evaluate_candidate_details(payload)
                 return self._send_json(result)
             return self._start_search_job(payload)
         except ValueError as exc:

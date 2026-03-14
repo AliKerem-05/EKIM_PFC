@@ -127,6 +127,11 @@ def losses_copper_ac_dowell(wire: dict, f_hz: float, i_rms_a: float, geom: dict,
 
 
 def thermal_estimate_hurley(core: dict, p_tot_w: float, t_amb_c: float, ventilation: str = "natural", air_speed_m_s: Optional[float] = None, k: Optional[float] = None, rth_scale: float = 1.0):
+    # Hurley-style lumped model:
+    #   Rth ~= k / sqrt(Vc)
+    # with Vc expressed in m^3.
+    # Therefore k is not dimensionless; it implicitly carries units of
+    # C * m^(3/2) / W so that Rth ends up in C/W.
     if core.get("ve_mm3") and core["ve_mm3"] > 0:
         vc_m3 = core["ve_mm3"] * 1e-9
     else:
@@ -170,9 +175,11 @@ def thermal_estimate_hurley(core: dict, p_tot_w: float, t_amb_c: float, ventilat
     details = {
         "Vc_m3": vc_m3,
         "k_used": k_used,
+        "k_units": "C*m^(3/2)/W",
         "k_source": k_source,
         "RthScale": rth_scale,
         "Ventilation": ventilation,
         "AirSpeed_m_s": air_speed_m_s,
+        "model_note": "Hurley-type empirical model with Vc in m^3",
     }
     return rth_c_per_w, t_core_c, details
